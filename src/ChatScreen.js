@@ -1,5 +1,4 @@
 import React from "react";
-import "./App.css";
 import {
   AppBar,
   Backdrop,
@@ -14,12 +13,11 @@ import {
   Typography,
 } from "@material-ui/core";
 import { Send } from "@material-ui/icons";
-import { getToken } from "./services/ChatService";
-import { Component } from "react";
+import axios from "axios";
 import ChatItem from "./ChatItem";
 const Chat = require("twilio-chat");
 
-class ChatScreen extends Component {
+class ChatScreen extends React.Component {
   constructor(props) {
     super(props);
 
@@ -33,20 +31,26 @@ class ChatScreen extends Component {
     this.scrollDiv = React.createRef();
   }
 
+  getToken = async (email) => {
+    const response = await axios.get(`http://localhost:5000/token/${email}`);
+    const { data } = response;
+    return data.token;
+  };
+
   componentDidMount = async () => {
     const { location } = this.props;
     const { state } = location || {};
     const { email, room } = state || {};
     let token = "";
 
-    if (!(!!email && !!room)) {
+    if (!email || !room) {
       this.props.history.replace("/");
     }
 
     this.setState({ loading: true });
 
     try {
-      token = await getToken(email);
+      token = await this.getToken(email);
     } catch {
       throw new Error("unable to get token, please reload this page");
     }
@@ -54,12 +58,12 @@ class ChatScreen extends Component {
     const client = await Chat.Client.create(token);
 
     client.on("tokenAboutToExpire", async () => {
-      const token = await getToken(email);
+      const token = await this.getToken(email);
       client.updateToken(token);
     });
 
     client.on("tokenExpired", async () => {
-      const token = await getToken(email);
+      const token = await this.getToken(email);
       client.updateToken(token);
     });
 
@@ -115,7 +119,7 @@ class ChatScreen extends Component {
 
   sendMessage = () => {
     const { text, channel } = this.state;
-    if (!!text && !!String(text).trim()) {
+    if (text && String(text).trim()) {
       this.setState({ loading: true });
       channel && channel.sendMessage(text);
       this.setState({ text: "", loading: false });
@@ -133,7 +137,7 @@ class ChatScreen extends Component {
         <Backdrop open={loading} style={{ zIndex: 99999 }}>
           <CircularProgress style={{ color: "white" }} />
         </Backdrop>
-        <AppBar style={styles.header} elevation={10}>
+        <AppBar elevation={10}>
           <Toolbar>
             <Typography variant="h6">
               {`Room: ${room}, User: ${email}`}
@@ -146,13 +150,9 @@ class ChatScreen extends Component {
           direction="column"
           justify="center"
           alignItems="stretch"
-          style={{ paddingTop: 100, borderWidth: 1 }}
+          style={styles.mainGrid}
         >
-          <Grid
-            item
-            style={{ overflow: "auto", height: 400 }}
-            ref={this.scrollDiv}
-          >
+          <Grid item style={styles.gridItemChatList} ref={this.scrollDiv}>
             <List dense={true}>
               {messages &&
                 messages.map((message) => (
@@ -164,17 +164,17 @@ class ChatScreen extends Component {
                 ))}
             </List>
           </Grid>
-          <Grid item style={{ marginTop: 12 }}>
+          <Grid item style={styles.gridItemMessage}>
             <Grid
               container
               direction="row"
               justify="center"
               alignItems="center"
             >
-              <Grid item style={{ flex: 1, marginRight: 12 }}>
+              <Grid item style={styles.textFieldContainer}>
                 <TextField
                   required
-                  style={{ width: "100%" }}
+                  style={styles.textField}
                   placeholder="Enter message"
                   variant="outlined"
                   multiline
@@ -188,11 +188,11 @@ class ChatScreen extends Component {
               </Grid>
               <Grid item>
                 <IconButton
-                  style={{ backgroundColor: "#3f51b5" }}
+                  style={styles.sendButton}
                   onClick={this.sendMessage}
-                  disabled={!channel}
+                  disabled={!channel || !text}
                 >
-                  <Send style={{ color: "white" }} />
+                  <Send style={styles.sendIcon} />
                 </IconButton>
               </Grid>
             </Grid>
@@ -204,12 +204,14 @@ class ChatScreen extends Component {
 }
 
 const styles = {
-  header: {},
-  grid: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  card: { padding: 40 },
-  textField: { width: 300 },
+  textField: { width: "100%" },
+  textFieldContainer: { flex: 1, marginRight: 12 },
   gridItem: { paddingTop: 12, paddingBottom: 12 },
-  button: { width: 300 },
+  gridItemChatList: { overflow: "auto", height: 400 },
+  gridItemMessage: { marginTop: 12 },
+  sendButton: { backgroundColor: "#3f51b5" },
+  sendIcon: { color: "white" },
+  mainGrid: { paddingTop: 100, borderWidth: 1 },
 };
 
 export default ChatScreen;
