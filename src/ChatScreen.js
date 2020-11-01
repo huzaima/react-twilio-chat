@@ -145,13 +145,7 @@ class ChatScreen extends React.Component {
           </Toolbar>
         </AppBar>
         <CssBaseline />
-        <Grid
-          container
-          direction="column"
-          justify="center"
-          alignItems="stretch"
-          style={styles.mainGrid}
-        >
+        <Grid container direction="column" style={styles.mainGrid}>
           <Grid item style={styles.gridItemChatList} ref={this.scrollDiv}>
             <List dense={true}>
               {messages &&
@@ -178,7 +172,7 @@ class ChatScreen extends React.Component {
                   placeholder="Enter message"
                   variant="outlined"
                   multiline
-                  rows={3}
+                  rows={2}
                   value={text}
                   disabled={!channel}
                   onChange={(event) =>
@@ -204,11 +198,11 @@ class ChatScreen extends React.Component {
 }
 
 const styles = {
-  textField: { width: "100%" },
+  textField: { width: "100%", borderWidth: 0, borderColor: "transparent" },
   textFieldContainer: { flex: 1, marginRight: 12 },
   gridItem: { paddingTop: 12, paddingBottom: 12 },
-  gridItemChatList: { overflow: "auto", height: 400 },
-  gridItemMessage: { marginTop: 12 },
+  gridItemChatList: { overflow: "auto", height: "70vh" },
+  gridItemMessage: { marginTop: 12, marginBottom: 12 },
   sendButton: { backgroundColor: "#3f51b5" },
   sendIcon: { color: "white" },
   mainGrid: { paddingTop: 100, borderWidth: 1 },
