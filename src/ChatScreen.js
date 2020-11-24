@@ -67,26 +67,24 @@ class ChatScreen extends React.Component {
       client.updateToken(token);
     });
 
-    try {
-      const channel = await client.getChannelByUniqueName(room);
-
+    client.on("channelJoined", async (channel) => {
       // getting list of all messages since this is an existing channel
       const messages = await channel.getMessages();
-      this.setState(
-        {
-          channel,
-          loading: false,
-          messages: messages.items || [],
-        },
-        () => this.joinChannel(channel)
-      );
+      this.setState({ messages: messages.items || [] });
+      this.scrollToBottom();
+    });
+
+    try {
+      const channel = await client.getChannelByUniqueName(room);
+      await this.joinChannel(channel);
+      this.setState({ channel, loading: false });
     } catch {
       try {
         const channel = await client.createChannel({
           uniqueName: room,
           friendlyName: room,
         });
-        this.joinChannel(channel);
+        await this.joinChannel(channel);
         this.setState({ channel, loading: false });
       } catch {
         throw new Error("unable to create channel, please reload this page");
@@ -94,10 +92,11 @@ class ChatScreen extends React.Component {
     }
   };
 
-  joinChannel = (channel) => {
-    channel.join();
+  joinChannel = async (channel) => {
+    if (channel.channelState.status !== "joined") {
+      await channel.join();
+    }
     channel.on("messageAdded", this.handleMessageAdded);
-    this.scrollToBottom();
   };
 
   handleMessageAdded = (message) => {
