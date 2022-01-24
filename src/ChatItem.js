@@ -1,7 +1,7 @@
 import React from "react";
 import { ListItem } from "@material-ui/core";
 
-class ChatItem extends React.Component {
+class ChatItem extends React.PureComponent {
   render() {
     const { message, email } = this.props;
     const isOwnMessage = message.author === email;
